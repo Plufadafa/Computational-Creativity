@@ -5,20 +5,15 @@
  */
 package jacksgameoflife;
 
+import java.util.Timer;
+import java.util.TimerTask;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.util.Random;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.SourceDataLine;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.Timer;
-
 
 /**
  *
@@ -26,10 +21,12 @@ import javax.swing.Timer;
  */
 public class JacksGameOfLife extends JPanel {
 
+    static private GridAnalyzer gridAnalyzer;
+    static private Timer timer;
     private int scale = 5; // change this to make each live animal appear larger / smaller. This has been done because 1 pixel is too small.
     private Color dead = Color.black;
     private Random seedPattern = new Random();
-    private int[][] field; //list visualised as so: int [x][y]  XXXXXXX
+    static private int[][] field; //list visualised as so: int [x][y]  XXXXXXX
 //                                                             Y
 //                                                             Y
 //                                                             Y
@@ -45,7 +42,7 @@ public class JacksGameOfLife extends JPanel {
     public void incrementField() {
         for (int x = 0; x < field.length; x++) { //going through each row
             for (int y = 0; y < field[x].length; y++) { //columns of that row
-                checkAlive(x,y);
+                checkAlive(x, y);
             }
         }
     }
@@ -97,29 +94,44 @@ public class JacksGameOfLife extends JPanel {
                 field[x][y] = 0; //dies of overheating >.<
             }
         } else { //else there isn't an animal on cell
-            if (totalValue == 3){ //perfect conditions for a little animal to be born <3
+            if (totalValue == 3) { //perfect conditions for a little animal to be born <3
                 field[x][y] = 1;
             }
         }
-
     }
 
     public static void main(String[] args) throws Exception {
-        
         Sound sound = new Sound();
+        gridAnalyzer = new GridAnalyzer();
         sound.ree();
+
         // TODO code application logic here
         JFrame frame = new JFrame();
         JacksGameOfLife game = new JacksGameOfLife(1000, 1000);
         frame.getContentPane().add(game);
-        //frame.setPreferredSize(new Dimension(field.length, field[0].length));
         frame.pack();
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
-        new Timer(100, (ActionEvent e) -> {  
-            game.incrementField();
-            game.repaint();
-        }).start();
+
+        timer = new Timer();
+        
+        class GameTask extends TimerTask {
+            public void run() {
+                if (gridAnalyzer.checkCoverage(field)){
+                    game.generateChords();
+                    timer.cancel();
+                }
+                game.incrementField();
+                game.repaint();             
+            }
+        }
+        
+        timer.schedule(new GameTask(), 0,  3*100);
+    }
+    
+    private void generateChords(){
+        GridAnalyzer gd = new GridAnalyzer();
+        System.out.println("FUUUUUUCK");
     }
 
     private void seedFieldRandom() {
