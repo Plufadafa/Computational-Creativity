@@ -130,7 +130,7 @@ public class JacksGameOfLife extends JPanel {
     }
     
     private void generateChords(){
-        GridAnalyzer gd = new GridAnalyzer();
+        gridAnalyzer.decideChords(field);
         System.out.println("FUUUUUUCK");
     }
 

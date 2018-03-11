@@ -5,6 +5,9 @@
  */
 package jacksgameoflife;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class GridAnalyzer {
 
     String emDown = "1 Em Down";
@@ -36,23 +39,21 @@ public class GridAnalyzer {
 
     String gDown = "10 G Down";
     String gDownUp = "10 G DownUp";
-    
+
     static int numOfPixels = 40000;
     int blockCount = 0;
     int iteration = 0;
-    
 
-    
-    public boolean checkCoverage(int[][] field){
+    public boolean checkCoverage(int[][] field) {
         for (int i = 0; i < field.length; i++) {
             for (int j = 0; j < field[0].length; j++) {
-                if (field[i][j] == 1){
+                if (field[i][j] == 1) {
                     blockCount++;
                 }
             }
         }
         iteration++;
-        if (blockCount > 6000){ // 70% of 40000 
+        if (blockCount > 6000) { // 70% of 40000 
             blockCount = 0;
             System.out.println("FINAL RUN: " + iteration + " gave " + blockCount);
             return true;
@@ -61,5 +62,31 @@ public class GridAnalyzer {
         blockCount = 0;
         return false;
     }
-    
+
+    public ArrayList<ArrayList<String>> decideChords(int[][] field) {
+        ArrayList<ArrayList<String>> array = new ArrayList();
+        
+        ArrayList<Integer> listOfBlocks = new ArrayList();
+
+        for (int i = 0; i < field.length; i++) {
+            for (int j = 0; j < field[0].length; j++) {
+                if (field[i][j] == 1) {
+                    listOfBlocks.add(j);
+                }
+            }
+            break;
+        }
+        
+        String s = "";
+        
+        for (Integer listOfBlock : listOfBlocks) {
+            s = s + " " +  listOfBlock.toString();
+            
+        }
+        
+        System.out.println("The result of decideChords " + s);
+
+        return array;
+    }
+
 }
