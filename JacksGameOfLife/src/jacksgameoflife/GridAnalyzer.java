@@ -63,30 +63,97 @@ public class GridAnalyzer {
         return false;
     }
 
-    public ArrayList<ArrayList<String>> decideChords(int[][] field) {
-        ArrayList<ArrayList<String>> array = new ArrayList();
+    public ArrayList<String> decideChords(int[][] field) {
+        ArrayList<ArrayList<Integer>> array = new ArrayList();
+        ArrayList<String> returnArray = new ArrayList();
         
-        ArrayList<Integer> listOfBlocks = new ArrayList();
 
         for (int i = 0; i < field.length; i++) {
+            ArrayList<Integer> listOfBlocks = new ArrayList();
             for (int j = 0; j < field[0].length; j++) {
-                if (field[i][j] == 1) {
+                if (field[j][i] == 1) {
                     listOfBlocks.add(j);
                 }
+                
             }
-            break;
+            array.add(listOfBlocks);
         }
         
-        String s = "";
-        
-        for (Integer listOfBlock : listOfBlocks) {
-            s = s + " " +  listOfBlock.toString();
-            
+        returnArray = analyzeRows(array);
+        for (String string : returnArray) {
+            System.out.println (string);
         }
         
-        System.out.println("The result of decideChords " + s);
-
-        return array;
+        return returnArray;
+    }
+    
+    public ArrayList<String> analyzeRows(ArrayList<ArrayList<Integer>> listOfRowsAndTheirBlocks){
+        ArrayList<String> returnArray = new ArrayList();
+        
+        int counter = 0;
+        int total = 0;
+        for (ArrayList<Integer> listOfRowsAndTheirBlock : listOfRowsAndTheirBlocks) {
+            counter = 0;
+            total = 0;
+            for (Integer integer : listOfRowsAndTheirBlock) {
+                total = total + integer;
+                counter ++;
+            }
+            if (counter != 0){
+            total = total / counter;
+            }else {
+                total = 0;
+            }
+            returnArray.add(getChordFromInt(total));
+        }
+        
+        
+        return returnArray; 
+    }
+    
+    public String getChordFromInt(int value){
+        
+        if (value  <= 20){
+            return emDown;
+        }
+        if (value <= 40){
+            return eDown;
+        }
+        
+        if (value <= 60) {
+            return amDown;
+        }
+        
+        if (value <= 80) {
+            return cDown;
+        }
+        
+        if (value <= 100) {
+            return aDown;
+        }
+        
+        if (value <= 120) {
+            return fDown;
+        }
+        
+        if (value <= 140) {
+            return dmDown;
+        }
+        
+        if (value <= 160) {
+            return bmDown;
+        }
+        
+        if (value <= 180) {
+            return dDown;
+        }
+        
+        if (value <= 200) {
+            return gDown;
+        }
+        
+        return ""; // if returning this then something is fucked.  
+        
     }
 
 }

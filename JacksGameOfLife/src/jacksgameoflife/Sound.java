@@ -51,8 +51,11 @@ public class Sound {
 
     String gDown = "10 G Down";
     String gDownUp = "10 G DownUp";
+    
+    String root = new File("").getAbsolutePath() + "/Sounds/Sounds broken up/";
+    
 
-    String root = "/JavaProject\\JacksGameOfLife\\Sounds\\Sounds broken up\\";
+    
     String extension = ".wav";
 
     InputStream iAudio;
