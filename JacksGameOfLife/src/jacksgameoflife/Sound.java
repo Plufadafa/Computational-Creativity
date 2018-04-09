@@ -58,26 +58,15 @@ public class Sound {
     InputStream iAudio;
     Clip clip;
 
-    /**
-     *
-     */
-    public void play4Bar(ArrayList<String> listChords) {
-        for (String listChord : listChords) {
-
-        }
-    }
-
-
-
-    public void ree() throws UnsupportedAudioFileException, IOException, LineUnavailableException {
+    public AudioInputStream generateBarAudioFromChords(String one, String two, String three, String four) throws UnsupportedAudioFileException, IOException, LineUnavailableException {
 
         Line.Info linfo = new Line.Info(Clip.class);
         Line line = AudioSystem.getLine(linfo);
         clip = (Clip) line;
-        File file = new File(root + dDown + extension);
-        File file2 = new File(root + gDownUp + extension);
-        File file3 = new File(root + emDownUp + extension);
-        File file4 = new File(root + emDown + extension);
+        File file = new File(root + one + extension);
+        File file2 = new File(root + two + extension);
+        File file3 = new File(root + three + extension);
+        File file4 = new File(root + four + extension);
 
         AudioInputStream chord1 = AudioSystem.getAudioInputStream(file);
         AudioInputStream chord2 = AudioSystem.getAudioInputStream(file2);
@@ -99,39 +88,24 @@ public class Sound {
                 stuckFiles1.getFormat(),
                 stuckFiles1.getFrameLength() + stuckFiles2.getFrameLength());
 
-        clip.open(stuckFiles);
-        clip.start();
+        return stuckFiles;
 
     }
 
-    public void multiRee() throws FileNotFoundException, IOException, InterruptedException {
+    public AudioInputStream playTune(ArrayList<String> listOfChords) throws UnsupportedAudioFileException, IOException, LineUnavailableException {
+    
+        AudioInputStream one = generateBarAudioFromChords(listOfChords.get(0), listOfChords.get(1), listOfChords.get(2), listOfChords.get(3));
+        AudioInputStream two = generateBarAudioFromChords(listOfChords.get(4), listOfChords.get(5), listOfChords.get(6), listOfChords.get(7));
 
-        ArrayList<String> files = new ArrayList();
-        files.add(root + dDown + extension);
-        files.add(root + gDownUp + extension);
-        files.add(root + emDownUp + extension);
-
-        byte[] buffer = new byte[4096];
-        for (String filePath : files) {
-            File file = new File(filePath);
-            try {
-                AudioInputStream is = AudioSystem.getAudioInputStream(file);
-                AudioFormat format = is.getFormat();
-                SourceDataLine line = AudioSystem.getSourceDataLine(format);
-                line.open(format);
-                line.start();
-                while (is.available() > 0) {
-                    int len = is.read(buffer);
-                    line.write(buffer, 0, len);
-                }
-                line.drain();
-                line.close();
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-            TimeUnit.MICROSECONDS.sleep(1);
-        }
-
+        AudioInputStream finalAudio = new AudioInputStream(
+                new SequenceInputStream(one, two),
+                one.getFormat(),
+                one.getFrameLength() + one.getFrameLength());
+        return finalAudio;
+        
+//        clip.open(finalAudio);
+//        clip.start();
     }
-
+    
+    
 }

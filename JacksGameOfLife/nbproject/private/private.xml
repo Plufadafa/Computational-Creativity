@@ -5,6 +5,8 @@
         <group>
             <file>file:/C:/JavaProject/JacksGameOfLife/src/jacksgameoflife/JacksGameOfLife.java</file>
             <file>file:/C:/JavaProject/JacksGameOfLife/src/jacksgameoflife/Sound.java</file>
+            <file>file:/C:/JavaProject/JacksGameOfLife/src/jacksgameoflife/StartMenu.java</file>
+            <file>file:/C:/JavaProject/JacksGameOfLife/src/jacksgameoflife/GridAnalyzer.java</file>
         </group>
     </open-files>
 </project-private>

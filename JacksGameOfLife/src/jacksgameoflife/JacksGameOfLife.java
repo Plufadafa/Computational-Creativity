@@ -11,6 +11,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.Random;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -21,21 +22,24 @@ import javax.swing.JPanel;
  */
 public class JacksGameOfLife extends JPanel {
 
-    static private GridAnalyzer gridAnalyzer;
-    static private Timer timer;
+    private ArrayList<Integer> strumPattern;
+    private GridAnalyzer gridAnalyzer;
+    private Timer timer;
     private int scale = 5; // change this to make each live animal appear larger / smaller. This has been done because 1 pixel is too small.
     private Color dead = Color.black;
     private Random seedPattern = new Random();
-    static private int[][] field; //list visualised as so: int [x][y]  XXXXXXX
+    private int[][] field; //list visualised as so: int [x][y]  XXXXXXX
 //                                                             Y
 //                                                             Y
 //                                                             Y
 //                                                             Y     
 
-    public JacksGameOfLife(int fieldX, int fieldY) {
+    public JacksGameOfLife(int fieldX, int fieldY, GridAnalyzer gridAnalyzer, ArrayList<Integer> strumPattern) {
+        this.strumPattern = strumPattern;
         int scaledX = fieldX / scale;
         int scaledY = fieldY / scale;
         field = new int[scaledX][scaledY];
+        this.gridAnalyzer = gridAnalyzer;
         seedFieldRandom();
     }
 
@@ -100,38 +104,16 @@ public class JacksGameOfLife extends JPanel {
         }
     }
 
-    public static void main(String[] args) throws Exception {
-        Sound sound = new Sound();
-        gridAnalyzer = new GridAnalyzer();
-        sound.ree();
-
-        // TODO code application logic here
-        JFrame frame = new JFrame();
-        JacksGameOfLife game = new JacksGameOfLife(1000, 1000);
-        frame.getContentPane().add(game);
-        frame.pack();
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setVisible(true);
-
-        timer = new Timer();
-        
-        class GameTask extends TimerTask {
-            public void run() {
-                if (gridAnalyzer.checkCoverage(field)){
-                    game.generateChords();
-                    timer.cancel();
-                }
-                game.incrementField();
-                game.repaint();             
-            }
-        }
-        
-        timer.schedule(new GameTask(), 0,  3*100);
+    public int[][] getField() {
+        return field;
     }
     
-    private void generateChords(){
-        gridAnalyzer.decideChords(field);
-        System.out.println("FUUUUUUCK");
+    public void setField (int[][] field){
+        this.field = field;
+    }
+
+    public ArrayList<String> generateChords(ArrayList<String> reUsedChords) {
+        return gridAnalyzer.decideChords(field, strumPattern, reUsedChords);
     }
 
     private void seedFieldRandom() {
