@@ -64,6 +64,7 @@ public class GridAnalyzer {
         return false;
     }
 
+
     public ArrayList<String> decideChords(int[][] field, ArrayList<Integer> strumPattern, ArrayList<String> reUsedChords) {
         this.reUsedChords = reUsedChords;
         ArrayList<Integer> array = new ArrayList();
@@ -77,8 +78,8 @@ public class GridAnalyzer {
                 if (field[t][j] == 1) {
                     listOfBlocks.add(j);
                 }
+                
             }
-
             ArrayList<Integer> listOfLiveBlocks = new ArrayList();
 
             for (Integer listOfBlock : listOfBlocks) {
@@ -220,7 +221,6 @@ public class GridAnalyzer {
         } else {
             return gDownUp;
         }
-
     }
 
 }
