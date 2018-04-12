@@ -149,5 +149,7 @@ public class JacksGameOfLife extends JPanel {
         int fieldY = field[0].length * scale; // field[0] is the number of columns i.e height. 
         return new Dimension(fieldX, fieldY);
     }
+    
+    
 
 }

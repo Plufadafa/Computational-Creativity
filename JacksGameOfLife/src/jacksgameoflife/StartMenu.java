@@ -5,17 +5,25 @@
  */
 package jacksgameoflife;
 
+import com.sun.media.sound.WaveFileWriter;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics2D;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.awt.image.BufferedImage;
+import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.imageio.ImageIO;
+import javax.sound.sampled.AudioFileFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
@@ -112,7 +120,7 @@ public class StartMenu extends javax.swing.JFrame {
             }
         }
 
-        timer.schedule(new GameTask(), 0, 3 * 100);
+        timer.schedule(new GameTask(), 0, 1 * 100);
     }
 
     /**
@@ -214,6 +222,13 @@ public class StartMenu extends javax.swing.JFrame {
         buttonGroup2 = new javax.swing.ButtonGroup();
         mainPanel = new javax.swing.JPanel();
         jPanel3 = new javax.swing.JPanel();
+        saveButton = new javax.swing.JButton();
+        bar1FinalDisplayLabel = new javax.swing.JLabel();
+        bar2FinalDisplayLabel = new javax.swing.JLabel();
+        jLabel9 = new javax.swing.JLabel();
+        jLabel11 = new javax.swing.JLabel();
+        resetButtonFinal = new javax.swing.JButton();
+        saveAudioButton = new javax.swing.JButton();
         jPanel1 = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
@@ -266,15 +281,73 @@ public class StartMenu extends javax.swing.JFrame {
         mainPanel.setPreferredSize(new java.awt.Dimension(551, 305));
         mainPanel.setLayout(new java.awt.CardLayout());
 
+        saveButton.setText("Save image");
+        saveButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveButtonActionPerformed(evt);
+            }
+        });
+
+        bar1FinalDisplayLabel.setText("_");
+
+        bar2FinalDisplayLabel.setText("_");
+
+        jLabel9.setText("Bar 1");
+
+        jLabel11.setText("Bar 2");
+
+        resetButtonFinal.setText("New tune");
+        resetButtonFinal.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                resetButtonFinalActionPerformed(evt);
+            }
+        });
+
+        saveAudioButton.setText("Save audio");
+        saveAudioButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveAudioButtonActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 551, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                .addContainerGap(274, Short.MAX_VALUE)
+                .addComponent(resetButtonFinal)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(saveAudioButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(saveButton)
+                .addContainerGap())
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addGap(21, 21, 21)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel11)
+                    .addComponent(jLabel9)
+                    .addComponent(bar1FinalDisplayLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(bar2FinalDisplayLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 502, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 260, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                .addGap(28, 28, 28)
+                .addComponent(jLabel9)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(bar1FinalDisplayLabel)
+                .addGap(14, 14, 14)
+                .addComponent(jLabel11)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(bar2FinalDisplayLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 78, Short.MAX_VALUE)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(saveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(resetButtonFinal, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(saveAudioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
         );
 
         mainPanel.add(jPanel3, "card4");
@@ -352,8 +425,9 @@ public class StartMenu extends javax.swing.JFrame {
                         .addComponent(jCheckBox7)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(jCheckBox8))
-                    .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 264, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel1))
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 352, Short.MAX_VALUE)
+                        .addComponent(jLabel4, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap(99, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -506,7 +580,7 @@ public class StartMenu extends javax.swing.JFrame {
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
+                .addContainerGap(86, Short.MAX_VALUE)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel18)
                     .addComponent(jLabel16)
@@ -547,13 +621,12 @@ public class StartMenu extends javax.swing.JFrame {
                                     .addComponent(bar2Chord3Checkbox)
                                     .addComponent(bar2Chord2Checkbox)
                                     .addComponent(bar2Chord1Checkbox))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 45, Short.MAX_VALUE)
-                                .addComponent(resetButton, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(reSeedButton, javax.swing.GroupLayout.PREFERRED_SIZE, 84, javax.swing.GroupLayout.PREFERRED_SIZE)))))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(doneButton, javax.swing.GroupLayout.PREFERRED_SIZE, 84, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addGap(32, 32, 32)
+                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addComponent(resetButton, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(reSeedButton, javax.swing.GroupLayout.PREFERRED_SIZE, 84, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(doneButton, javax.swing.GroupLayout.PREFERRED_SIZE, 84, javax.swing.GroupLayout.PREFERRED_SIZE))))))
+                .addGap(88, 88, 88))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -627,10 +700,11 @@ public class StartMenu extends javax.swing.JFrame {
                         .addGap(0, 55, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(reSeedButton, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(resetButton, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(doneButton, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                        .addComponent(resetButton, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(reSeedButton, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(doneButton, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE))))
         );
 
         mainPanel.add(jPanel2, "card3");
@@ -663,6 +737,15 @@ public class StartMenu extends javax.swing.JFrame {
             }
         }
         return returnList;
+    }
+
+    private void writeWavFromAudio() throws IOException, UnsupportedAudioFileException, LineUnavailableException {
+        finalAudio = sound.playTune(chordStrings);
+         File f = new File(generateName() + ".wav");
+        
+        WaveFileWriter writer = new WaveFileWriter();
+
+        writer.write(finalAudio, AudioFileFormat.Type.WAVE, f);
     }
 
     private void rearrangeFieldToIncludeKeptBlocks(ArrayList<Integer> listOfKeptBlocks) {
@@ -733,6 +816,35 @@ public class StartMenu extends javax.swing.JFrame {
         }
         return blockRange;
     }
+
+    public BufferedImage getScreenShot(Component component) {
+
+        BufferedImage image = new BufferedImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_RGB);
+        component.paint(image.getGraphics());
+        return image;
+    }
+
+    public void saveScreenshot(Component component, String filename) throws Exception {
+        BufferedImage img = getScreenShot(component);
+        ImageIO.write(img, "png", new File(filename));
+    }
+
+    public void saveImage() throws Exception {
+        game.setField(field);
+        saveScreenshot(frame, generateName() + ".png");
+    }
+
+    public String generateName() {
+        String filename = "";
+        for (String chordString : chordStrings) {
+            filename = filename + chordString.substring(1);
+        }
+        if (filename.equals("")) {
+            filename = "NoChords";
+        }
+        return filename;
+    }
+
 
     private void buttonOneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonOneActionPerformed
         playButton.setVisible(false);
@@ -1046,7 +1158,47 @@ public class StartMenu extends javax.swing.JFrame {
     private void doneButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_doneButtonActionPerformed
         jPanel3.setVisible(true);
         jPanel2.setVisible(false);
+
+        String bar1 = "";
+        String bar2 = "";
+
+        for (int i = 0; i < chordStrings.size(); i++) {
+            if (i < 4) {
+                bar1 = bar1 + " " + chordStrings.get(i).substring(1);
+            } else {
+                bar2 = bar2 + " " + chordStrings.get(i).substring(1);
+            }
+        }
+
+        bar1FinalDisplayLabel.setText(bar1);
+        bar2FinalDisplayLabel.setText(bar2);
     }//GEN-LAST:event_doneButtonActionPerformed
+
+    private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
+        try {
+            saveImage();
+        } catch (Exception ex) {
+            Logger.getLogger(StartMenu.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_saveButtonActionPerformed
+
+    private void resetButtonFinalActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_resetButtonFinalActionPerformed
+        jPanel3.setVisible(false);
+        resetButtonActionPerformed(evt);
+
+    }//GEN-LAST:event_resetButtonFinalActionPerformed
+
+    private void saveAudioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveAudioButtonActionPerformed
+        try {
+            writeWavFromAudio();
+        } catch (IOException ex) {
+            Logger.getLogger(StartMenu.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (UnsupportedAudioFileException ex) {
+            Logger.getLogger(StartMenu.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (LineUnavailableException ex) {
+            Logger.getLogger(StartMenu.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_saveAudioButtonActionPerformed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -1058,6 +1210,7 @@ public class StartMenu extends javax.swing.JFrame {
     private javax.swing.JCheckBox bar1Chord3Checkbox;
     private javax.swing.JLabel bar1Chord4;
     private javax.swing.JCheckBox bar1Chord4Checkbox;
+    private javax.swing.JLabel bar1FinalDisplayLabel;
     private javax.swing.JLabel bar2Chord1;
     private javax.swing.JCheckBox bar2Chord1Checkbox;
     private javax.swing.JLabel bar2Chord2;
@@ -1066,6 +1219,7 @@ public class StartMenu extends javax.swing.JFrame {
     private javax.swing.JCheckBox bar2Chord3Checkbox;
     private javax.swing.JLabel bar2Chord4;
     private javax.swing.JCheckBox bar2Chord4Checkbox;
+    private javax.swing.JLabel bar2FinalDisplayLabel;
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.ButtonGroup buttonGroup2;
     private javax.swing.JButton buttonOne;
@@ -1080,6 +1234,7 @@ public class StartMenu extends javax.swing.JFrame {
     private javax.swing.JCheckBox jCheckBox8;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel14;
     private javax.swing.JLabel jLabel16;
@@ -1093,6 +1248,7 @@ public class StartMenu extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel9;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
@@ -1100,5 +1256,8 @@ public class StartMenu extends javax.swing.JFrame {
     private javax.swing.JButton playButton;
     private javax.swing.JButton reSeedButton;
     private javax.swing.JButton resetButton;
+    private javax.swing.JButton resetButtonFinal;
+    private javax.swing.JButton saveAudioButton;
+    private javax.swing.JButton saveButton;
     // End of variables declaration//GEN-END:variables
 }

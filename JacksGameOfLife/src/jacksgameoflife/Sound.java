@@ -3,6 +3,7 @@ package jacksgameoflife;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.BufferedInputStream;
 import java.io.SequenceInputStream;
 import java.util.ArrayList;
 import javax.sound.sampled.AudioInputStream;
@@ -48,7 +49,7 @@ public class Sound {
     String gDown = "10 G Down";
     String gDownUp = "10 G DownUp";
 
-    String root = "/JavaProject\\JacksGameOfLife\\Sounds\\Sounds broken up\\";
+    String root = "/Sounds/";
     String extension = ".wav";
 
     InputStream iAudio;
@@ -59,15 +60,25 @@ public class Sound {
         Line.Info linfo = new Line.Info(Clip.class);
         Line line = AudioSystem.getLine(linfo);
         clip = (Clip) line;
-        File file = new File(root + one + extension);
-        File file2 = new File(root + two + extension);
-        File file3 = new File(root + three + extension);
-        File file4 = new File(root + four + extension);
+        
+        InputStream path = getClass().getResourceAsStream(root + one + extension);
+        InputStream bufferedIn1 = new BufferedInputStream(path);
+        InputStream path2 = getClass().getResourceAsStream(root + two + extension);
+        InputStream bufferedIn2 = new BufferedInputStream(path2);
+        InputStream path3 = getClass().getResourceAsStream(root + three + extension);
+        InputStream bufferedIn3 = new BufferedInputStream(path3);
+        InputStream path4 = getClass().getResourceAsStream(root + four + extension);
+        InputStream bufferedIn4 = new BufferedInputStream(path4);
+        
+//        File path = new File(root + one + extension);
+//        File path2 = new File(root + two + extension);
+//        File path3 = new File(root + three + extension);
+//        File path4 = new File(root + four + extension);
 
-        AudioInputStream chord1 = AudioSystem.getAudioInputStream(file);
-        AudioInputStream chord2 = AudioSystem.getAudioInputStream(file2);
-        AudioInputStream chord3 = AudioSystem.getAudioInputStream(file3);
-        AudioInputStream chord4 = AudioSystem.getAudioInputStream(file4);
+        AudioInputStream chord1 = AudioSystem.getAudioInputStream(bufferedIn1);
+        AudioInputStream chord2 = AudioSystem.getAudioInputStream(bufferedIn2);
+        AudioInputStream chord3 = AudioSystem.getAudioInputStream(bufferedIn3);
+        AudioInputStream chord4 = AudioSystem.getAudioInputStream(bufferedIn4);
 
         AudioInputStream stuckFiles1 = new AudioInputStream(
                 new SequenceInputStream(chord1, chord2),
