@@ -8,15 +8,14 @@ package jacksgameoflife;
 import com.sun.media.sound.WaveFileWriter;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Graphics2D;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -30,8 +29,8 @@ import javax.sound.sampled.Clip;
 import javax.sound.sampled.Line;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.UnsupportedAudioFileException;
+import javax.swing.JCheckBox;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 
 /**
  *
@@ -39,59 +38,68 @@ import javax.swing.JOptionPane;
  */
 public class StartMenu extends javax.swing.JFrame {
 
-    private ArrayList<Integer> reUsedBlocks = new ArrayList();
+    private ArrayList<javax.swing.JCheckBox> chordsToKeepCheckBoxes = new ArrayList();
+    private ArrayList<javax.swing.JLabel> chordLabels = new ArrayList();
+    private ArrayList<javax.swing.JCheckBox> strumPatternCheckBoxes = new ArrayList();
+    private ArrayList<Boolean> reUsedBlocks = new ArrayList();
     private ArrayList<String> reUsedChords = new ArrayList();
-
     AudioInputStream finalAudio;
     Clip clip;
     JacksGameOfLife game;
-    private JFrame frame = new JFrame();
-    private Sound sound = new Sound();
+    private final JFrame frame = new JFrame();
+    private final Sound sound = new Sound();
     private ArrayList<String> chordStrings;
-    private ArrayList<Integer> strumPattern;
+    private ArrayList<Boolean> strumPattern;
     static private GridAnalyzer gridAnalyzer;
     static private Timer timer;
-    private int scale = 5; // change this to make each live animal appear larger / smaller. This has been done because 1 pixel is too small.
-    private Color dead = Color.black;
-    private Random seedPattern = new Random();
-    static private int[][] field = null; //list visualised as so: int [x][y]  XXXXXXX
-//                                                             Y
-//                                                             Y
-//                                                             Y
-//                                                             Y   
+    private final int scale = 5; // change this to make each live animal appear larger / smaller. This has been done because 1 pixel is too small.
+    private final Color dead = Color.black;
+    private final Random seedPattern = new Random();
+    static private int[][] field = null;
 
     /**
      * Creates new form StartMenu
      */
     public StartMenu() {
         initComponents();
+        //Initialise the list of strum pattern checkboxes.
+        strumPatternCheckBoxes.addAll(Arrays.asList(strumPatternCheckBox1, strumPatternCheckBox2, strumPatternCheckBox3, strumPatternCheckBox4, strumPatternCheckBox5, strumPatternCheckBox6, strumPatternCheckBox7, strumPatternCheckBox8));
 
+        //Initialise the list of chord labels 
+        chordLabels.addAll(Arrays.asList(bar1Chord1, bar1Chord2, bar1Chord3, bar1Chord4, bar2Chord1, bar2Chord2, bar2Chord3, bar2Chord4));
+
+        //Initialise the list of chords to keep checkBoxes
+        chordsToKeepCheckBoxes.addAll(Arrays.asList(bar1Chord1Checkbox, bar1Chord2Checkbox, bar1Chord3Checkbox, bar1Chord4Checkbox, bar2Chord1Checkbox, bar2Chord2Checkbox, bar2Chord3Checkbox, bar2Chord4Checkbox));
     }
 
+    /**
+     * When user presses close window.
+     */
     public void onExit() {
 
         timer.cancel();
         System.exit(JFrame.DISPOSE_ON_CLOSE);
     }
 
+    /**
+     * sets up the gridAnalyzer, game and the timer. 
+     * @throws Exception
+     */
     public void startGame() throws Exception {
 
         gridAnalyzer = new GridAnalyzer();
-
-        // TODO code application logic here
         game = new JacksGameOfLife(1000, 1000, gridAnalyzer, strumPattern);
         frame.getContentPane().add(game);
 
-        //        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         WindowListener exitListener = new WindowAdapter() {
-
             @Override
             public void windowClosing(WindowEvent e) {
 
-                timer.cancel();
+                timer.cancel(); //stops the execution of any further iterations of field. 
                 frame.dispose();
             }
         };
+
         frame.addWindowListener(exitListener);
         frame.pack();
         frame.setVisible(true);
@@ -101,26 +109,27 @@ public class StartMenu extends javax.swing.JFrame {
         class GameTask extends TimerTask {
 
             public void run() {
-                if (gridAnalyzer.checkCoverage(game.getField())) {
-                    if (field == null) {
+                if (gridAnalyzer.checkCoverage(game.getField())) { // if the field has a satisfactory amount of coverage to cease simulation
+                    if (field == null) { //if first run, else then field has been set.
                         field = game.getField();
                     }
-                    chordStrings = game.generateChords(reUsedChords);
-                    playButton.setVisible(true);
-                    ArrayList<Integer> listOfKeptBlocks = listOfKeptBlocks();
+                    chordStrings = game.generateChords(reUsedChords); //reused chords will be empty if first run. Chord strings used for sound.
+                    playButton.setVisible(true); //now sound is ready to be played, allow user to see the play button. 
+                    ArrayList<Integer> listOfKeptBlocks = generateListOfKeptBlocks(); //the blocks which the user has chosen to keep.
                     if (!listOfKeptBlocks.isEmpty()) { //if not the first run and blocks have been selected
-                        rearrangeFieldToIncludeKeptBlocks(listOfKeptBlocks);
-                        game.setField(field);
-                        game.repaint();
+                        rearrangeFieldToIncludeKeptBlocks(listOfKeptBlocks); //visually changes the field to represent the chords the user chose to keep. 
+                        game.setField(field); //update the field. 
+                        game.repaint(); //paint the frame with the new field. 
                     }
-                    timer.cancel();
+                    timer.cancel(); //no more simulation should occur, end the timer now. 
                 }
+                //if the coverage is not satisfactory, then increment the simulation and repaint the frame. 
                 game.incrementField();
                 game.repaint();
             }
         }
 
-        timer.schedule(new GameTask(), 0, 1 * 100);
+        timer.schedule(new GameTask(), 0, 1 * 100);//setting the timer up to begin simulation process. 
     }
 
     /**
@@ -155,6 +164,8 @@ public class StartMenu extends javax.swing.JFrame {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 try {
+
+                    //setters for the new run. Establishing the GUI.
                     StartMenu s = new StartMenu();
                     javax.swing.JButton button = s.getPlayButton();
                     button.setVisible(false);
@@ -168,7 +179,7 @@ public class StartMenu extends javax.swing.JFrame {
 
                     javax.swing.JPanel panel3 = s.getJPanel3();
                     panel3.setVisible(false);
-                    s.setJPanel3(panel3);
+                    s.setJPanel3(panel3);// this panel should not be seen until the user is ready to save their tune. 
 
                 } catch (Exception ex) {
                     Logger.getLogger(StartMenu.class.getName()).log(Level.SEVERE, null, ex);
@@ -177,36 +188,68 @@ public class StartMenu extends javax.swing.JFrame {
         });
     }
 
+    /**
+     *
+     * @return
+     */
     public javax.swing.JButton getPlayButton() {
         return playButton;
     }
 
+    /**
+     *
+     * @param button
+     */
     public void setPlayButton(javax.swing.JButton button) {
         playButton = button;
     }
 
+    /**
+     *
+     * @return
+     */
     public javax.swing.JPanel getJPanel1() {
-        return jPanel1;
+        return startPanel;
     }
 
+    /**
+     *
+     * @param panel
+     */
     public void setJPanel1(javax.swing.JPanel panel) {
-        jPanel1 = panel;
+        startPanel = panel;
     }
 
+    /**
+     *
+     * @return
+     */
     public javax.swing.JPanel getJPanel2() {
-        return jPanel2;
+        return chooseChordsToKeepPanel;
     }
 
+    /**
+     *
+     * @param button
+     */
     public void setJPanel2(javax.swing.JPanel button) {
-        jPanel2 = button;
+        chooseChordsToKeepPanel = button;
     }
 
+    /**
+     *
+     * @return
+     */
     public javax.swing.JPanel getJPanel3() {
-        return jPanel3;
+        return finalSavePanel;
     }
 
+    /**
+     *
+     * @param button
+     */
     public void setJPanel3(javax.swing.JPanel button) {
-        jPanel3 = button;
+        finalSavePanel = button;
     }
 
     /**
@@ -221,7 +264,7 @@ public class StartMenu extends javax.swing.JFrame {
         buttonGroup1 = new javax.swing.ButtonGroup();
         buttonGroup2 = new javax.swing.ButtonGroup();
         mainPanel = new javax.swing.JPanel();
-        jPanel3 = new javax.swing.JPanel();
+        finalSavePanel = new javax.swing.JPanel();
         saveButton = new javax.swing.JButton();
         bar1FinalDisplayLabel = new javax.swing.JLabel();
         bar2FinalDisplayLabel = new javax.swing.JLabel();
@@ -229,22 +272,22 @@ public class StartMenu extends javax.swing.JFrame {
         jLabel11 = new javax.swing.JLabel();
         resetButtonFinal = new javax.swing.JButton();
         saveAudioButton = new javax.swing.JButton();
-        jPanel1 = new javax.swing.JPanel();
+        startPanel = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         playButton = new javax.swing.JButton();
-        jCheckBox1 = new javax.swing.JCheckBox();
-        jCheckBox2 = new javax.swing.JCheckBox();
-        jCheckBox3 = new javax.swing.JCheckBox();
-        jCheckBox4 = new javax.swing.JCheckBox();
-        jCheckBox5 = new javax.swing.JCheckBox();
-        buttonOne = new javax.swing.JButton();
+        strumPatternCheckBox1 = new javax.swing.JCheckBox();
+        strumPatternCheckBox2 = new javax.swing.JCheckBox();
+        strumPatternCheckBox3 = new javax.swing.JCheckBox();
+        strumPatternCheckBox4 = new javax.swing.JCheckBox();
+        strumPatternCheckBox5 = new javax.swing.JCheckBox();
+        startSimulationButton = new javax.swing.JButton();
         jLabel4 = new javax.swing.JLabel();
-        jCheckBox6 = new javax.swing.JCheckBox();
-        jCheckBox7 = new javax.swing.JCheckBox();
-        jCheckBox8 = new javax.swing.JCheckBox();
-        jPanel2 = new javax.swing.JPanel();
+        strumPatternCheckBox6 = new javax.swing.JCheckBox();
+        strumPatternCheckBox7 = new javax.swing.JCheckBox();
+        strumPatternCheckBox8 = new javax.swing.JCheckBox();
+        chooseChordsToKeepPanel = new javax.swing.JPanel();
         bar1Chord1 = new javax.swing.JLabel();
         bar1Chord1Checkbox = new javax.swing.JCheckBox();
         jLabel6 = new javax.swing.JLabel();
@@ -310,11 +353,11 @@ public class StartMenu extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
-        jPanel3.setLayout(jPanel3Layout);
-        jPanel3Layout.setHorizontalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+        javax.swing.GroupLayout finalSavePanelLayout = new javax.swing.GroupLayout(finalSavePanel);
+        finalSavePanel.setLayout(finalSavePanelLayout);
+        finalSavePanelLayout.setHorizontalGroup(
+            finalSavePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, finalSavePanelLayout.createSequentialGroup()
                 .addContainerGap(274, Short.MAX_VALUE)
                 .addComponent(resetButtonFinal)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -322,18 +365,18 @@ public class StartMenu extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(saveButton)
                 .addContainerGap())
-            .addGroup(jPanel3Layout.createSequentialGroup()
+            .addGroup(finalSavePanelLayout.createSequentialGroup()
                 .addGap(21, 21, 21)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(finalSavePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jLabel11)
                     .addComponent(jLabel9)
                     .addComponent(bar1FinalDisplayLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(bar2FinalDisplayLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 502, Short.MAX_VALUE))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-        jPanel3Layout.setVerticalGroup(
-            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+        finalSavePanelLayout.setVerticalGroup(
+            finalSavePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, finalSavePanelLayout.createSequentialGroup()
                 .addGap(28, 28, 28)
                 .addComponent(jLabel9)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -343,14 +386,14 @@ public class StartMenu extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(bar2FinalDisplayLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 78, Short.MAX_VALUE)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(finalSavePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(saveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(resetButtonFinal, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(saveAudioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 61, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap())
         );
 
-        mainPanel.add(jPanel3, "card4");
+        mainPanel.add(finalSavePanel, "card4");
 
         jLabel2.setText("Bar 2");
 
@@ -365,80 +408,80 @@ public class StartMenu extends javax.swing.JFrame {
             }
         });
 
-        jCheckBox1.setText("Up + down strum");
+        strumPatternCheckBox1.setText("Up + down strum");
 
-        jCheckBox2.setText("Up + down strum");
+        strumPatternCheckBox2.setText("Up + down strum");
 
-        jCheckBox3.setText("Up + down strum");
+        strumPatternCheckBox3.setText("Up + down strum");
 
-        jCheckBox4.setText("Up + down strum");
-        jCheckBox4.addActionListener(new java.awt.event.ActionListener() {
+        strumPatternCheckBox4.setText("Up + down strum");
+        strumPatternCheckBox4.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jCheckBox4ActionPerformed(evt);
+                strumPatternCheckBox4ActionPerformed(evt);
             }
         });
 
-        jCheckBox5.setText("Up + down strum");
-        jCheckBox5.addActionListener(new java.awt.event.ActionListener() {
+        strumPatternCheckBox5.setText("Up + down strum");
+        strumPatternCheckBox5.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jCheckBox5ActionPerformed(evt);
+                strumPatternCheckBox5ActionPerformed(evt);
             }
         });
 
-        buttonOne.setText("Start simulation");
-        buttonOne.addActionListener(new java.awt.event.ActionListener() {
+        startSimulationButton.setText("Start simulation");
+        startSimulationButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                buttonOneActionPerformed(evt);
+                startSimulationButtonActionPerformed(evt);
             }
         });
 
         jLabel4.setText("the pattern will be an up and down strum in one beat.");
 
-        jCheckBox6.setText("Up + down strum");
+        strumPatternCheckBox6.setText("Up + down strum");
 
-        jCheckBox7.setText("Up + down strum");
+        strumPatternCheckBox7.setText("Up + down strum");
 
-        jCheckBox8.setText("Up + down strum");
+        strumPatternCheckBox8.setText("Up + down strum");
 
-        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
-        jPanel1.setLayout(jPanel1Layout);
-        jPanel1Layout.setHorizontalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+        javax.swing.GroupLayout startPanelLayout = new javax.swing.GroupLayout(startPanel);
+        startPanel.setLayout(startPanelLayout);
+        startPanelLayout.setHorizontalGroup(
+            startPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, startPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(startPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 264, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jCheckBox1)
+                    .addGroup(startPanelLayout.createSequentialGroup()
+                        .addComponent(strumPatternCheckBox1)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jCheckBox2)
+                        .addComponent(strumPatternCheckBox2)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jCheckBox3)
+                        .addComponent(strumPatternCheckBox3)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jCheckBox4))
+                        .addComponent(strumPatternCheckBox4))
                     .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 264, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jCheckBox5)
+                    .addGroup(startPanelLayout.createSequentialGroup()
+                        .addComponent(strumPatternCheckBox5)
                         .addGap(2, 2, 2)
-                        .addComponent(jCheckBox6)
+                        .addComponent(strumPatternCheckBox6)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jCheckBox7)
+                        .addComponent(strumPatternCheckBox7)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jCheckBox8))
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addComponent(strumPatternCheckBox8))
+                    .addGroup(startPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                         .addComponent(jLabel1, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 352, Short.MAX_VALUE)
                         .addComponent(jLabel4, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap(99, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, startPanelLayout.createSequentialGroup()
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(playButton, javax.swing.GroupLayout.PREFERRED_SIZE, 96, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(buttonOne, javax.swing.GroupLayout.PREFERRED_SIZE, 161, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(startSimulationButton, javax.swing.GroupLayout.PREFERRED_SIZE, 161, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
         );
-        jPanel1Layout.setVerticalGroup(
-            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel1Layout.createSequentialGroup()
+        startPanelLayout.setVerticalGroup(
+            startPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(startPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel1)
                 .addGap(3, 3, 3)
@@ -446,27 +489,27 @@ public class StartMenu extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel3)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jCheckBox1)
-                    .addComponent(jCheckBox2)
-                    .addComponent(jCheckBox3)
-                    .addComponent(jCheckBox4))
+                .addGroup(startPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(strumPatternCheckBox1)
+                    .addComponent(strumPatternCheckBox2)
+                    .addComponent(strumPatternCheckBox3)
+                    .addComponent(strumPatternCheckBox4))
                 .addGap(18, 18, 18)
                 .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jCheckBox5)
-                    .addComponent(jCheckBox6)
-                    .addComponent(jCheckBox7)
-                    .addComponent(jCheckBox8))
+                .addGroup(startPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(strumPatternCheckBox5)
+                    .addComponent(strumPatternCheckBox6)
+                    .addComponent(strumPatternCheckBox7)
+                    .addComponent(strumPatternCheckBox8))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(buttonOne, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(startPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(startSimulationButton, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(playButton, javax.swing.GroupLayout.PREFERRED_SIZE, 58, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(22, 22, 22))
         );
 
-        mainPanel.add(jPanel1, "card2");
+        mainPanel.add(startPanel, "card2");
 
         bar1Chord1.setText("jLabel5");
 
@@ -575,30 +618,30 @@ public class StartMenu extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
+        javax.swing.GroupLayout chooseChordsToKeepPanelLayout = new javax.swing.GroupLayout(chooseChordsToKeepPanel);
+        chooseChordsToKeepPanel.setLayout(chooseChordsToKeepPanelLayout);
+        chooseChordsToKeepPanelLayout.setHorizontalGroup(
+            chooseChordsToKeepPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(chooseChordsToKeepPanelLayout.createSequentialGroup()
                 .addContainerGap(86, Short.MAX_VALUE)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(chooseChordsToKeepPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel18)
                     .addComponent(jLabel16)
                     .addComponent(jLabel14)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
+                    .addGroup(chooseChordsToKeepPanelLayout.createSequentialGroup()
                         .addGap(163, 163, 163)
                         .addComponent(jLabel23))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(chooseChordsToKeepPanelLayout.createSequentialGroup()
+                        .addGroup(chooseChordsToKeepPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(chooseChordsToKeepPanelLayout.createSequentialGroup()
+                                .addGroup(chooseChordsToKeepPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel10)
                                     .addComponent(jLabel8)
                                     .addComponent(jLabel12)
                                     .addComponent(jLabel6)
                                     .addComponent(jLabel20))
                                 .addGap(72, 72, 72)
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(chooseChordsToKeepPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(bar2Chord4)
                                     .addComponent(bar2Chord3)
                                     .addComponent(bar2Chord2)
@@ -610,38 +653,39 @@ public class StartMenu extends javax.swing.JFrame {
                             .addComponent(jLabel22)
                             .addComponent(jLabel21))
                         .addGap(70, 70, 70)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(bar1Chord3Checkbox)
+                        .addGroup(chooseChordsToKeepPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(bar1Chord2Checkbox)
-                            .addComponent(bar1Chord4Checkbox)
                             .addComponent(bar1Chord1Checkbox)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(bar2Chord4Checkbox)
-                                    .addComponent(bar2Chord3Checkbox)
-                                    .addComponent(bar2Chord2Checkbox)
-                                    .addComponent(bar2Chord1Checkbox))
-                                .addGap(32, 32, 32)
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(chooseChordsToKeepPanelLayout.createSequentialGroup()
+                                .addGroup(chooseChordsToKeepPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(bar1Chord3Checkbox)
+                                    .addComponent(bar1Chord4Checkbox)
+                                    .addGroup(chooseChordsToKeepPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                        .addComponent(bar2Chord4Checkbox)
+                                        .addComponent(bar2Chord3Checkbox)
+                                        .addComponent(bar2Chord2Checkbox)
+                                        .addComponent(bar2Chord1Checkbox)))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 110, Short.MAX_VALUE)
+                                .addGroup(chooseChordsToKeepPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                                     .addComponent(resetButton, javax.swing.GroupLayout.PREFERRED_SIZE, 82, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(reSeedButton, javax.swing.GroupLayout.PREFERRED_SIZE, 84, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(doneButton, javax.swing.GroupLayout.PREFERRED_SIZE, 84, javax.swing.GroupLayout.PREFERRED_SIZE))))))
-                .addGap(88, 88, 88))
+                .addContainerGap())
         );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
+        chooseChordsToKeepPanelLayout.setVerticalGroup(
+            chooseChordsToKeepPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(chooseChordsToKeepPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
+                .addGroup(chooseChordsToKeepPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(chooseChordsToKeepPanelLayout.createSequentialGroup()
                         .addComponent(jLabel23)
                         .addGap(1, 1, 1)
                         .addComponent(jLabel22)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(jPanel2Layout.createSequentialGroup()
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGroup(chooseChordsToKeepPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(chooseChordsToKeepPanelLayout.createSequentialGroup()
+                                .addGroup(chooseChordsToKeepPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(chooseChordsToKeepPanelLayout.createSequentialGroup()
                                         .addGap(3, 3, 3)
                                         .addComponent(jLabel6)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -650,7 +694,7 @@ public class StartMenu extends javax.swing.JFrame {
                                         .addComponent(jLabel10)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(jLabel12))
-                                    .addGroup(jPanel2Layout.createSequentialGroup()
+                                    .addGroup(chooseChordsToKeepPanelLayout.createSequentialGroup()
                                         .addComponent(bar1Chord1Checkbox)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                         .addComponent(bar1Chord2Checkbox)
@@ -661,8 +705,8 @@ public class StartMenu extends javax.swing.JFrame {
                                 .addGap(7, 7, 7)
                                 .addComponent(jLabel21)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addGroup(chooseChordsToKeepPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(chooseChordsToKeepPanelLayout.createSequentialGroup()
                                         .addComponent(jLabel14)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                         .addComponent(jLabel16)
@@ -670,25 +714,25 @@ public class StartMenu extends javax.swing.JFrame {
                                         .addComponent(jLabel18)
                                         .addGap(18, 18, 18)
                                         .addComponent(jLabel20))
-                                    .addGroup(jPanel2Layout.createSequentialGroup()
-                                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                    .addGroup(chooseChordsToKeepPanelLayout.createSequentialGroup()
+                                        .addGroup(chooseChordsToKeepPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addGroup(chooseChordsToKeepPanelLayout.createSequentialGroup()
                                                 .addComponent(bar2Chord1)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                                 .addComponent(bar2Chord2)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                                 .addComponent(bar2Chord3))
-                                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                            .addGroup(chooseChordsToKeepPanelLayout.createSequentialGroup()
                                                 .addComponent(bar2Chord1Checkbox)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                                 .addComponent(bar2Chord2Checkbox)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                                 .addComponent(bar2Chord3Checkbox)))
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addGroup(chooseChordsToKeepPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                             .addComponent(bar2Chord4Checkbox)
                                             .addComponent(bar2Chord4)))))
-                            .addGroup(jPanel2Layout.createSequentialGroup()
+                            .addGroup(chooseChordsToKeepPanelLayout.createSequentialGroup()
                                 .addGap(3, 3, 3)
                                 .addComponent(bar1Chord1)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -698,7 +742,7 @@ public class StartMenu extends javax.swing.JFrame {
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(bar1Chord4)))
                         .addGap(0, 55, Short.MAX_VALUE))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                    .addGroup(chooseChordsToKeepPanelLayout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(resetButton, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -707,7 +751,7 @@ public class StartMenu extends javax.swing.JFrame {
                         .addComponent(doneButton, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE))))
         );
 
-        mainPanel.add(jPanel2, "card3");
+        mainPanel.add(chooseChordsToKeepPanel, "card3");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -725,29 +769,44 @@ public class StartMenu extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private ArrayList<Integer> listOfKeptBlocks() {
+    /*
+        Formats the integer list of blocks which make up the chords the user has
+        chosen to keep for further iteration. This is necessary to preserve the 
+        visual aspect of the iterative process. 
+        @return returnList an array list of all the blocks which should be kept. 
+     */
+    private ArrayList<Integer> generateListOfKeptBlocks() {
         ArrayList<Integer> returnList = new ArrayList();
+        //if there are no reUsedBlocks  then there isn't any need to continue. 
         if (reUsedBlocks.isEmpty()) {
             return returnList;
         }
 
         for (int i = 0; i < reUsedBlocks.size(); i++) {
-            if (reUsedBlocks.get(i) == 1) {
+            if (reUsedBlocks.get(i)) {
                 returnList.add(i);
             }
         }
         return returnList;
     }
-
+    /*
+        Method which saves a copy of the final generated tune as a wav file.
+        At the moment, the wav file is saved to the same directory the .jar 
+        being run is found in. 
+    */
     private void writeWavFromAudio() throws IOException, UnsupportedAudioFileException, LineUnavailableException {
-        finalAudio = sound.playTune(chordStrings);
-         File f = new File(generateName() + ".wav");
-        
+        finalAudio = sound.putTuneTogetherFromListOfChords(chordStrings);
+        File f = new File(generateName() + ".wav");
         WaveFileWriter writer = new WaveFileWriter();
-
         writer.write(finalAudio, AudioFileFormat.Type.WAVE, f);
     }
 
+    /*
+        This method is run once the visual simulation has come to an end. The blocks
+        of rows which the user specified they'd like to keep are passed as an Array
+        and the field is then rearranged to include such rows. 
+        @param listOfKeptBlocks the blocks of rows which should be preserved
+    */
     private void rearrangeFieldToIncludeKeptBlocks(ArrayList<Integer> listOfKeptBlocks) {
         ArrayList<Integer> blockRange = new ArrayList();
         int lowerRange;
@@ -770,6 +829,13 @@ public class StartMenu extends javax.swing.JFrame {
 
     }
 
+    /*
+    Based on a block number provided, passes back an arrayList with two values.
+    The first value is the first row of the block, and the second is the final 
+    row of the block. 
+    @param blockNumber the number of which group of 25 rows is being 
+    looked at.
+    */
     private ArrayList<Integer> getRangeFromBlockNumber(int blockNumber) {
         ArrayList<Integer> blockRange = new ArrayList();
         switch (blockNumber) {
@@ -817,23 +883,42 @@ public class StartMenu extends javax.swing.JFrame {
         return blockRange;
     }
 
+    /**
+     *
+     * @param component 
+     * @return the image passed from the component provided
+     */
     public BufferedImage getScreenShot(Component component) {
 
         BufferedImage image = new BufferedImage(component.getWidth(), component.getHeight(), BufferedImage.TYPE_INT_RGB);
-        component.paint(image.getGraphics());
+        component.paint(image.getGraphics()); //
         return image;
     }
 
+    /**
+     *
+     * @param component
+     * @param filename
+     * @throws Exception
+     */
     public void saveScreenshot(Component component, String filename) throws Exception {
         BufferedImage img = getScreenShot(component);
         ImageIO.write(img, "png", new File(filename));
     }
 
+    /**
+     *
+     * @throws Exception
+     */
     public void saveImage() throws Exception {
         game.setField(field);
         saveScreenshot(frame, generateName() + ".png");
     }
 
+    /**
+     *  Generates a name for the file based on the chords present. 
+     * @return
+     */
     public String generateName() {
         String filename = "";
         for (String chordString : chordStrings) {
@@ -845,56 +930,16 @@ public class StartMenu extends javax.swing.JFrame {
         return filename;
     }
 
-
-    private void buttonOneActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonOneActionPerformed
+    /*
+    The logic executed when the startSimulation button is pressed. 
+    begins the game of life simulation. 
+    */
+    private void startSimulationButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_startSimulationButtonActionPerformed
         playButton.setVisible(false);
         strumPattern = new ArrayList();
-        if (jCheckBox1.isSelected()) {
-            strumPattern.add(1);
-        } else {
-            strumPattern.add(0);
-        }
 
-        if (jCheckBox2.isSelected()) {
-            strumPattern.add(1);
-        } else {
-            strumPattern.add(0);
-        }
-
-        if (jCheckBox3.isSelected()) {
-            strumPattern.add(1);
-        } else {
-            strumPattern.add(0);
-        }
-
-        if (jCheckBox4.isSelected()) {
-            strumPattern.add(1);
-        } else {
-            strumPattern.add(0);
-        }
-
-        if (jCheckBox5.isSelected()) {
-            strumPattern.add(1);
-        } else {
-            strumPattern.add(0);
-        }
-
-        if (jCheckBox6.isSelected()) {
-            strumPattern.add(1);
-        } else {
-            strumPattern.add(0);
-        }
-
-        if (jCheckBox7.isSelected()) {
-            strumPattern.add(1);
-        } else {
-            strumPattern.add(0);
-        }
-
-        if (jCheckBox8.isSelected()) {
-            strumPattern.add(1);
-        } else {
-            strumPattern.add(0);
+        for (JCheckBox strumPatternCheckBox : strumPatternCheckBoxes) { //re fills the strum pattern list for this new run. 
+            strumPattern.add(strumPatternCheckBox.isSelected());
         }
 
         try {
@@ -902,18 +947,24 @@ public class StartMenu extends javax.swing.JFrame {
         } catch (Exception ex) {
             Logger.getLogger(StartMenu.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }//GEN-LAST:event_buttonOneActionPerformed
+    }//GEN-LAST:event_startSimulationButtonActionPerformed
 
-    private void jCheckBox5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox5ActionPerformed
+    private void strumPatternCheckBox5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_strumPatternCheckBox5ActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jCheckBox5ActionPerformed
+    }//GEN-LAST:event_strumPatternCheckBox5ActionPerformed
 
-    private void jCheckBox4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox4ActionPerformed
+    private void strumPatternCheckBox4ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_strumPatternCheckBox4ActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_jCheckBox4ActionPerformed
-
+    }//GEN-LAST:event_strumPatternCheckBox4ActionPerformed
+    
+    
+    /*
+    Plays the tune based on the chords which have been generated. Takes the user to the next
+    panel which displays options to reset, finish the tune, and reseed the simulation with the chosen
+    chords to persist into the next iteration of the song. 
+    */
     private void playButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_playButtonActionPerformed
-        if (clip != null) {
+        if (clip != null) { // stops the current clip playing if there is one already playing. 
             clip.stop();
         }
 
@@ -927,35 +978,24 @@ public class StartMenu extends javax.swing.JFrame {
         }
 
         try {
-            finalAudio = sound.playTune(chordStrings);
-        } catch (UnsupportedAudioFileException ex) {
-            Logger.getLogger(StartMenu.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
-            Logger.getLogger(StartMenu.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (LineUnavailableException ex) {
+            finalAudio = sound.putTuneTogetherFromListOfChords(chordStrings); //play the final tune 
+        } catch (UnsupportedAudioFileException | IOException | LineUnavailableException ex) {
             Logger.getLogger(StartMenu.class.getName()).log(Level.SEVERE, null, ex);
         }
         try {
             clip.open(finalAudio);
-        } catch (LineUnavailableException ex) {
-            Logger.getLogger(StartMenu.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (IOException ex) {
+        } catch (LineUnavailableException | IOException ex) {
             Logger.getLogger(StartMenu.class.getName()).log(Level.SEVERE, null, ex);
         }
         clip.start();
 
-        jPanel2.setVisible(true);
-        jPanel1.setVisible(false);
-        bar1Chord1.setText(chordStrings.get(0));
-        bar1Chord2.setText(chordStrings.get(1));
-        bar1Chord3.setText(chordStrings.get(2));
-        bar1Chord4.setText(chordStrings.get(3));
-        bar2Chord1.setText(chordStrings.get(4));
-        bar2Chord2.setText(chordStrings.get(5));
-        bar2Chord3.setText(chordStrings.get(6));
-        bar2Chord4.setText(chordStrings.get(7));
-
-
+        chooseChordsToKeepPanel.setVisible(true);
+        startPanel.setVisible(false);
+        
+        //labels for displaying what chords have been generated. 
+        for (int i = 0; i < chordLabels.size(); i++) {
+            chordLabels.get(i).setText(chordStrings.get(i));
+        }
     }//GEN-LAST:event_playButtonActionPerformed
 
     private void bar1Chord1CheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bar1Chord1CheckboxActionPerformed
@@ -990,181 +1030,80 @@ public class StartMenu extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_bar2Chord4CheckboxActionPerformed
 
+    /*
+    reseed the field but remember the chords which have been selected to be 
+    kept for the next iteration of the tune. 
+    */
     private void reSeedButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_reSeedButtonActionPerformed
 
         reUsedBlocks = new ArrayList();
         reUsedChords = new ArrayList();
 
-        if (bar1Chord1Checkbox.isSelected()) {
-            reUsedBlocks.add(1);
-        } else {
-            reUsedBlocks.add(0);
+        for (JCheckBox chordsToKeepCheckBox : chordsToKeepCheckBoxes) {
+            reUsedBlocks.add(chordsToKeepCheckBox.isSelected());
         }
-        if (bar1Chord2Checkbox.isSelected()) {
-            reUsedBlocks.add(1);
-        } else {
-            reUsedBlocks.add(0);
-        }
-        if (bar1Chord3Checkbox.isSelected()) {
-            reUsedBlocks.add(1);
-        } else {
-            reUsedBlocks.add(0);
-        }
-        if (bar1Chord4Checkbox.isSelected()) {
-            reUsedBlocks.add(1);
-        } else {
-            reUsedBlocks.add(0);
-        }
-        if (bar2Chord1Checkbox.isSelected()) {
-            reUsedBlocks.add(1);
-        } else {
-            reUsedBlocks.add(0);
-        }
-        if (bar2Chord2Checkbox.isSelected()) {
-            reUsedBlocks.add(1);
-        } else {
-            reUsedBlocks.add(0);
-        }
-        if (bar2Chord3Checkbox.isSelected()) {
-            reUsedBlocks.add(1);
-        } else {
-            reUsedBlocks.add(0);
-        }
-        if (bar2Chord4Checkbox.isSelected()) {
-            reUsedBlocks.add(1);
-        } else {
-            reUsedBlocks.add(0);
-        }
+        
         for (int i = 0; i < reUsedBlocks.size(); i++) {
-            if (reUsedBlocks.get(i) == 1) {
+            if (reUsedBlocks.get(i)) {
                 reUsedChords.add(chordStrings.get(i));
             } else {
                 reUsedChords.add("");
             }
         }
-        jPanel2.setVisible(false);
-        jPanel1.setVisible(true);
-
+        /*
+        Changing panels. Panel1 is the starting panel where the simulation can be 
+        started again. 
+        */
+        chooseChordsToKeepPanel.setVisible(false);
+        startPanel.setVisible(true);
+        
+        //Temporary checkbox used to update checkBox in list.
+        javax.swing.JCheckBox tempCheckBox = new javax.swing.JCheckBox(); 
         for (int i = 0; i < reUsedBlocks.size(); i++) {
-            switch (i) {
-                case 0:
-                    if (reUsedBlocks.get(i) == 1) {
-                        jCheckBox1.setEnabled(false);
-                    } else {
-                        jCheckBox1.setEnabled(true);
-                    }
-                    break;
-                case 1:
-                    if (reUsedBlocks.get(i) == 1) {
-                        jCheckBox2.setEnabled(false);
-                    } else {
-                        jCheckBox2.setEnabled(true);
-                    }
-                    break;
-                case 2:
-                    if (reUsedBlocks.get(i) == 1) {
-                        jCheckBox3.setEnabled(false);
-                    } else {
-                        jCheckBox3.setEnabled(true);
-                    }
-                    break;
-                case 3:
-                    if (reUsedBlocks.get(i) == 1) {
-                        jCheckBox4.setEnabled(false);
-                    } else {
-                        jCheckBox4.setEnabled(true);
-                    }
-                    break;
-                case 4:
-                    if (reUsedBlocks.get(i) == 1) {
-                        jCheckBox5.setEnabled(false);
-                    } else {
-                        jCheckBox5.setEnabled(true);
-                    }
-                    break;
-                case 5:
-                    if (reUsedBlocks.get(i) == 1) {
-                        jCheckBox6.setEnabled(false);
-                    } else {
-                        jCheckBox6.setEnabled(true);
-                    }
-                    break;
-                case 6:
-                    if (reUsedBlocks.get(i) == 1) {
-                        jCheckBox7.setEnabled(false);
-                    } else {
-                        jCheckBox7.setEnabled(true);
-                    }
-                    break;
-                case 7:
-                    if (reUsedBlocks.get(i) == 1) {
-                        jCheckBox8.setEnabled(false);
-                    } else {
-                        jCheckBox8.setEnabled(true);
-                    }
-                    break;
-            }
+            tempCheckBox = strumPatternCheckBoxes.get(i);
+            tempCheckBox.setEnabled(!reUsedBlocks.get(i));
+            strumPatternCheckBoxes.set(i, tempCheckBox);    
         }
-
-
     }//GEN-LAST:event_reSeedButtonActionPerformed
 
+    /*
+    resets the system back to as if it were being started for the first time. 
+    */
     private void resetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_resetButtonActionPerformed
         reUsedBlocks.clear();
         reUsedChords.clear();
         chordStrings.clear();
         strumPattern.clear();
-        bar1Chord1Checkbox.setEnabled(true);
-        bar1Chord2Checkbox.setEnabled(true);
-        bar1Chord3Checkbox.setEnabled(true);
-        bar1Chord4Checkbox.setEnabled(true);
-        bar2Chord1Checkbox.setEnabled(true);
-        bar2Chord2Checkbox.setEnabled(true);
-        bar2Chord3Checkbox.setEnabled(true);
-        bar2Chord4Checkbox.setEnabled(true);
+        // important setp, resets all of the checkboxes to their defaults
+        for (JCheckBox chordsToKeepCheckBox : chordsToKeepCheckBoxes) {
+            chordsToKeepCheckBox.setEnabled(true);
+            chordsToKeepCheckBox.setSelected(false);
+        }
+        
+        for (JCheckBox strumPatternCheckBox : strumPatternCheckBoxes) {
+            strumPatternCheckBox.setEnabled(true);
+            strumPatternCheckBox.setSelected(false);
+        }
 
-        bar1Chord1Checkbox.setSelected(false);
-        bar1Chord2Checkbox.setSelected(false);
-        bar1Chord3Checkbox.setSelected(false);
-        bar1Chord4Checkbox.setSelected(false);
-        bar2Chord1Checkbox.setSelected(false);
-        bar2Chord2Checkbox.setSelected(false);
-        bar2Chord3Checkbox.setSelected(false);
-        bar2Chord4Checkbox.setSelected(false);
-
-        jCheckBox1.setEnabled(true);
-        jCheckBox2.setEnabled(true);
-        jCheckBox3.setEnabled(true);
-        jCheckBox4.setEnabled(true);
-        jCheckBox5.setEnabled(true);
-        jCheckBox6.setEnabled(true);
-        jCheckBox7.setEnabled(true);
-        jCheckBox8.setEnabled(true);
-
-        jCheckBox1.setSelected(false);
-        jCheckBox2.setSelected(false);
-        jCheckBox3.setSelected(false);
-        jCheckBox4.setSelected(false);
-        jCheckBox5.setSelected(false);
-        jCheckBox6.setSelected(false);
-        jCheckBox7.setSelected(false);
-        jCheckBox8.setSelected(false);
-
-        jPanel2.setVisible(false);
-        jPanel1.setVisible(true);
+        chooseChordsToKeepPanel.setVisible(false);
+        startPanel.setVisible(true);
         playButton.setVisible(false);
     }//GEN-LAST:event_resetButtonActionPerformed
 
+    /*
+    prepares the final screen.
+    */
     private void doneButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_doneButtonActionPerformed
-        jPanel3.setVisible(true);
-        jPanel2.setVisible(false);
+        finalSavePanel.setVisible(true);
+        chooseChordsToKeepPanel.setVisible(false);
 
         String bar1 = "";
         String bar2 = "";
 
+        // builds the strings used in the labels which display the chord contents of each bar. 
         for (int i = 0; i < chordStrings.size(); i++) {
             if (i < 4) {
-                bar1 = bar1 + " " + chordStrings.get(i).substring(1);
+                bar1 = bar1 + " " + chordStrings.get(i).substring(1); //substring is used to chop off the number found at the start of every string. 
             } else {
                 bar2 = bar2 + " " + chordStrings.get(i).substring(1);
             }
@@ -1174,6 +1113,9 @@ public class StartMenu extends javax.swing.JFrame {
         bar2FinalDisplayLabel.setText(bar2);
     }//GEN-LAST:event_doneButtonActionPerformed
 
+    /*
+        calls the saveImage method. Saves a copy of the filed to the same directory as the .jar 
+    */
     private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
         try {
             saveImage();
@@ -1182,12 +1124,18 @@ public class StartMenu extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_saveButtonActionPerformed
 
+    /*
+        reset the system to a state as if it was being run for the first time. 
+    */
     private void resetButtonFinalActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_resetButtonFinalActionPerformed
-        jPanel3.setVisible(false);
+        finalSavePanel.setVisible(false);
         resetButtonActionPerformed(evt);
 
     }//GEN-LAST:event_resetButtonFinalActionPerformed
 
+    /*
+        Saves a copy of the audio as a .wav file to the same directory as the .jar 
+    */
     private void saveAudioButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveAudioButtonActionPerformed
         try {
             writeWavFromAudio();
@@ -1222,16 +1170,9 @@ public class StartMenu extends javax.swing.JFrame {
     private javax.swing.JLabel bar2FinalDisplayLabel;
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.ButtonGroup buttonGroup2;
-    private javax.swing.JButton buttonOne;
+    private javax.swing.JPanel chooseChordsToKeepPanel;
     private javax.swing.JButton doneButton;
-    private javax.swing.JCheckBox jCheckBox1;
-    private javax.swing.JCheckBox jCheckBox2;
-    private javax.swing.JCheckBox jCheckBox3;
-    private javax.swing.JCheckBox jCheckBox4;
-    private javax.swing.JCheckBox jCheckBox5;
-    private javax.swing.JCheckBox jCheckBox6;
-    private javax.swing.JCheckBox jCheckBox7;
-    private javax.swing.JCheckBox jCheckBox8;
+    private javax.swing.JPanel finalSavePanel;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -1249,9 +1190,6 @@ public class StartMenu extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
-    private javax.swing.JPanel jPanel1;
-    private javax.swing.JPanel jPanel2;
-    private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel mainPanel;
     private javax.swing.JButton playButton;
     private javax.swing.JButton reSeedButton;
@@ -1259,5 +1197,16 @@ public class StartMenu extends javax.swing.JFrame {
     private javax.swing.JButton resetButtonFinal;
     private javax.swing.JButton saveAudioButton;
     private javax.swing.JButton saveButton;
+    private javax.swing.JPanel startPanel;
+    private javax.swing.JButton startSimulationButton;
+    private javax.swing.JCheckBox strumPatternCheckBox1;
+    private javax.swing.JCheckBox strumPatternCheckBox2;
+    private javax.swing.JCheckBox strumPatternCheckBox3;
+    private javax.swing.JCheckBox strumPatternCheckBox4;
+    private javax.swing.JCheckBox strumPatternCheckBox5;
+    private javax.swing.JCheckBox strumPatternCheckBox6;
+    private javax.swing.JCheckBox strumPatternCheckBox7;
+    private javax.swing.JCheckBox strumPatternCheckBox8;
     // End of variables declaration//GEN-END:variables
+
 }

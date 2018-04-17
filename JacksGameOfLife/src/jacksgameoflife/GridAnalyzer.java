@@ -6,8 +6,11 @@
 package jacksgameoflife;
 
 import java.util.ArrayList;
-import java.util.List;
 
+/**
+ *
+ * @author jackn
+ */
 public class GridAnalyzer {
 
     String emDown = "1 Em Down";
@@ -45,6 +48,11 @@ public class GridAnalyzer {
     int iteration = 0;
     ArrayList<String> reUsedChords;
 
+    /**
+     *
+     * @param field
+     * @return
+     */
     public boolean checkCoverage(int[][] field) {
         for (int i = 0; i < field.length; i++) {
             for (int j = 0; j < field[0].length; j++) {
@@ -64,8 +72,14 @@ public class GridAnalyzer {
         return false;
     }
 
-
-    public ArrayList<String> decideChords(int[][] field, ArrayList<Integer> strumPattern, ArrayList<String> reUsedChords) {
+    /**
+     *
+     * @param field
+     * @param strumPattern
+     * @param reUsedChords
+     * @return
+     */
+    public ArrayList<String> decideChords(int[][] field, ArrayList<Boolean> strumPattern, ArrayList<String> reUsedChords) {
         this.reUsedChords = reUsedChords;
         ArrayList<Integer> array = new ArrayList();
         int average = 0;
@@ -78,7 +92,7 @@ public class GridAnalyzer {
                 if (field[t][j] == 1) {
                     listOfBlocks.add(j);
                 }
-                
+
             }
             ArrayList<Integer> listOfLiveBlocks = new ArrayList();
 
@@ -126,101 +140,132 @@ public class GridAnalyzer {
         return returnListOfChords;
     }
 
-    public ArrayList<String> matchValuesToChords(ArrayList<Integer> numberList, ArrayList<Integer> strumPattern) {
+    /**
+     * Translates the average block values read from the grid into a list of 8 Strings.
+     * These strings inside the returned list are the filenames of the wav files 
+     * which should be played. Along with an ArrayList of ints which make up the values,
+     * the method also reads a list of booleans which correspond to the type of strum 
+     * the chord should be played with. 
+     * @param blockValue the calculated averages of each block of 25 rows. 
+     * @param strumPattern
+     * @return An arrayList of strings which make up all of the chords to be played. 
+     */
+    public ArrayList<String> matchValuesToChords(ArrayList<Integer> blockValue, ArrayList<Boolean> strumPattern) {
 
         ArrayList<String> finalisedChordSelection = new ArrayList();
         boolean lookAtReUsedChords = false;
-        if (!reUsedChords.isEmpty()) {
-            lookAtReUsedChords = true;
+        if (!reUsedChords.isEmpty()) { // no need to look at the re used chords if this is the first run or if there are none. 
+            lookAtReUsedChords = true; // if there are chords to be reUsed then the for loop will have to consider looking inside the list. 
         }
-        for (int i = 0; i < numberList.size(); i++) { // Translate average block values to the chords as well as strumming patterns. 
-            //The numberList will be length 8 and so is the strumPattern list. 
+        for (int i = 0; i < blockValue.size(); i++) { // Translate average block values to the chords as well as strumming patterns. 
+            //The blockValue will be length 8 and so is the strumPattern list. 
             if (lookAtReUsedChords) { //should look at the list given 
-                String s = reUsedChords.get(i);
+                String s = reUsedChords.get(i); // if s == "" then the user has not specified to re use the chord in this block. Else, use the string that exists. 
                 if (s.equals("")) {// this blockDoesn't have a reUsedChord.
-                    finalisedChordSelection.add(getSpecificStringFromAverageValueAndStrum(numberList.get(i), strumPattern.get(i)));
+                    finalisedChordSelection.add(getSpecificStringFromAverageValueAndStrum(blockValue.get(i), strumPattern.get(i)));
                 } else {
-                    finalisedChordSelection.add(s);
+                    finalisedChordSelection.add(s); // no need to analyze the value again. 
                 }
-            }else{
-                finalisedChordSelection.add(getSpecificStringFromAverageValueAndStrum(numberList.get(i), strumPattern.get(i)));
+            } else {
+                finalisedChordSelection.add(getSpecificStringFromAverageValueAndStrum(blockValue.get(i), strumPattern.get(i)));
             }
 
         }
-
         return finalisedChordSelection;
     }
 
-    public String getSpecificStringFromAverageValueAndStrum(int value, int strum) {
+    /**
+     *Takes in a value and a boolean. The value is the average count of the rows
+     * which are being analyzed. A higher value means the system should play a higher
+     * pitched chord. The boolean is used to specify whether the chord should 
+     * be played with an Down/Up motion, or simply a Down strum. 
+     * @param value
+     * @param strum
+     * @return The string of the chord filename which should be played. 
+     */
+    public String getSpecificStringFromAverageValueAndStrum(int value, Boolean strum) {
+
+        // if strum is true then for this chord, the user has chosen to have a down up strum pattern.
+        // if it's false then they want to preserve the regular down strum.
+        
         if (value < 20) {
-            if (strum == 0) {
-                return emDown;
-            } else {
+            if (strum) {
                 return emDownUp;
-            }
-        }
-        if (value < 40) {
-            if (strum == 0) {
-                return eDown;
             } else {
-                return eDownUp;
-            }
-        }
-        if (value < 60) {
-            if (strum == 0) {
-                return amDown;
-            } else {
-                return amDownUp;
-            }
-        }
-        if (value < 80) {
-            if (strum == 0) {
-                return cDown;
-            } else {
-                return cDownUp;
-            }
-        }
-        if (value < 100) {
-            if (strum == 0) {
-                return aDown;
-            } else {
-                return aDownUp;
-            }
-        }
-        if (value < 120) {
-            if (strum == 0) {
-                return fDown;
-            } else {
-                return fDownUp;
-            }
-        }
-        if (value < 140) {
-            if (strum == 0) {
-                return dmDown;
-            } else {
-                return dmDownUp;
-            }
-        }
-        if (value < 160) {
-            if (strum == 0) {
-                return bmDown;
-            } else {
-                return bmDownUp;
-            }
-        }
-        if (value < 180) {
-            if (strum == 0) {
-                return dDown;
-            } else {
-                return dDownUp;
+                return emDown;
             }
         }
 
-        if (strum == 0) {
-            return gDown;
-        } else {
-            return gDownUp;
+        if (value < 40) {
+            if (strum) {
+                return eDownUp;
+            } else {
+                return eDown;
+            }
         }
+
+        if (value < 60) {
+            if (strum) {
+                return amDownUp;
+            } else {
+                return amDown;
+            }
+        }
+
+        if (value < 80) {
+            if (strum) {
+                return cDownUp;
+            } else {
+                return cDown;
+            }
+        }
+
+        if (value < 100) {
+            if (strum) {
+                return aDownUp;
+            } else {
+                return aDown;
+            }
+        }
+
+        if (value < 120) {
+            if (strum) {
+                return fDownUp;
+            } else {
+                return fDown;
+            }
+        }
+
+        if (value < 140) {
+            if (strum) {
+                return dmDownUp;
+            } else {
+                return dmDown;
+            }
+        }
+
+        if (value < 160) {
+            if (strum) {
+                return bmDownUp;
+            } else {
+                return bmDown;
+            }
+        }
+
+        if (value < 180) {
+            if (strum) {
+                return dDownUp;
+            } else {
+                return dDown;
+            }
+        }
+
+        if (strum) {
+            return gDownUp;
+        } else {
+            return gDown;
+        }
+
     }
 
 }
